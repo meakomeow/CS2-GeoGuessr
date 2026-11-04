@@ -1,5 +1,6 @@
 using CS2_GEO.Data;
 using CS2_GEO.Endpoints;
+using CS2_GEO.Game;
 using CS2_GEO.Services;
 using Microsoft.EntityFrameworkCore;
 
@@ -21,27 +22,19 @@ builder.Services.AddCors(options =>
         .AllowAnyMethod());
 });
 
+builder.Services.AddScoped<ILocationRepository, LocationRepository>();
+builder.Services.AddScoped<IMapRepository, MapRepository>();
+
+builder.Services.AddSingleton<IScoringStrategy>(new ExponentialScoring(new ScoringOptions()));
+builder.Services.AddSingleton<IGameScorer, GameScorer>();
+
 builder.Services.AddScoped<IMapsService, MapsService>();
 builder.Services.AddScoped<IGamesService, GamesService>();
 builder.Services.AddScoped<IRoundsService, RoundsService>();
 
 var app = builder.Build();
 
-//EF UPDATE
-await using (var scope = app.Services.CreateAsyncScope())
-{
-    var db = scope.ServiceProvider.GetRequiredService<GameDbContext>();
-
-    await db.Database.MigrateAsync();
-
-    var seedPath = Path.Combine(
-        AppContext.BaseDirectory,
-        "Data",
-        "Seed",
-        "seed.json");
-
-    await DatabaseSeeder.SeedAsync(db, seedPath);
-}
+await app.Services.InitializeDatabaseAsync();
 
 app.UseCors("Frontend");
 app.UseStaticFiles();
