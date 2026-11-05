@@ -8,8 +8,9 @@ public record Round(int RoundNumber, int LocationId, GuessResult Result) : IComp
     /// </summary>
     public int CompareTo(Round? other)
     {
+        // IComparable<T> contract: every instance sorts after null.
         if (other is null)
-            return -1;
+            return 1;
 
         var byScore = other.Result.Score.CompareTo(Result.Score);
         return byScore != 0 ? byScore : Result.Distance.CompareTo(other.Result.Distance);
